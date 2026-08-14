@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../data/database.dart';
 import '../providers/meets_providers.dart';
 import '../utils/meet_status.dart';
+import 'leaderboard_screen.dart';
 import 'meet_detail_screen.dart';
 import 'meet_form_screen.dart';
 import 'roster_screen.dart';
@@ -22,6 +23,13 @@ class MeetsListScreen extends ConsumerWidget {
         appBar: AppBar(
           title: const Text('Matchmaking'),
           actions: [
+            IconButton(
+              icon: const Icon(Icons.emoji_events_outlined),
+              tooltip: 'Leaderboard',
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const LeaderboardScreen()),
+              ),
+            ),
             IconButton(
               icon: const Icon(Icons.people_outline),
               tooltip: 'Player roster',

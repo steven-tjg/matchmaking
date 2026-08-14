@@ -196,6 +196,24 @@ class AppDatabase extends _$AppDatabase {
         ..orderBy([(t) => OrderingTerm(expression: t.createdAt)]))
       .watch();
 
+  /// Every completed match across every meet, for lifetime player statistics.
+  Stream<List<MatchRecord>> watchAllCompletedMatches() =>
+      (select(matchRecords)..where((t) => t.status.equals('completed'))).watch();
+
+  /// Every meet-participant row across every meet, for resolving participant ids to players
+  /// when computing lifetime statistics.
+  Stream<List<ParticipantWithPlayer>> watchAllParticipantsWithPlayers() {
+    final query = select(meetParticipants).join([
+      innerJoin(players, players.id.equalsExp(meetParticipants.playerId)),
+    ]);
+    return query.watch().map((rows) => rows
+        .map((row) => ParticipantWithPlayer(
+              participant: row.readTable(meetParticipants),
+              player: row.readTable(players),
+            ))
+        .toList());
+  }
+
   /// Fills every currently-free court with a new match, drawn fairly from checked-in
   /// participants who aren't already in a pending match. Returns how many matches were made.
   Future<int> generateMatches(int meetId, int courtCount) {
