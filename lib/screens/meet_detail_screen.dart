@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../providers/meets_providers.dart';
 import '../widgets/matches_tab.dart';
@@ -14,12 +15,31 @@ class MeetDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final meetAsync = ref.watch(meetProvider(meetId));
+    final theme = Theme.of(context);
+    final subtitleStyle = theme.textTheme.bodySmall?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+    );
 
     return DefaultTabController(
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(meetAsync.valueOrNull?.name ?? 'Meet'),
+          titleSpacing: 0,
+          title: meetAsync.maybeWhen(
+            data: (meet) => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(meet.name),
+                Text(
+                  '${DateFormat('MMM d, h:mm a').format(meet.scheduledAt)} · ${meet.location}',
+                  style: subtitleStyle,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+            orElse: () => const Text('Meet'),
+          ),
           bottom: const TabBar(tabs: [
             Tab(text: 'Participants'),
             Tab(text: 'Matches'),

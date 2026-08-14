@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/database_provider.dart';
 import '../providers/meets_providers.dart';
+import '../widgets/player_avatar.dart';
 
 class RosterScreen extends ConsumerWidget {
   const RosterScreen({super.key});
@@ -45,14 +46,32 @@ class RosterScreen extends ConsumerWidget {
       body: rosterAsync.when(
         data: (players) {
           if (players.isEmpty) {
-            return const Center(child: Text('No players yet. Tap + to add one.'));
+            final theme = Theme.of(context);
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.groups_outlined, size: 48, color: theme.colorScheme.outline),
+                    const SizedBox(height: 12),
+                    Text(
+                      'No players yet.\nTap + to add one.',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.outline),
+                    ),
+                  ],
+                ),
+              ),
+            );
           }
           return ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: players.length,
             itemBuilder: (context, index) {
               final player = players[index];
               return ListTile(
-                leading: CircleAvatar(child: Text(player.name.substring(0, 1).toUpperCase())),
+                leading: PlayerAvatar(name: player.name),
                 title: Text(player.name),
               );
             },

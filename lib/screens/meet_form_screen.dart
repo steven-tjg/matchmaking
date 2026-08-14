@@ -119,22 +119,31 @@ class _MeetFormScreenState extends ConsumerState<MeetFormScreen> {
                   (value == null || value.trim().isEmpty) ? 'Required' : null,
             ),
             const SizedBox(height: 16),
-            Row(
-              children: [
-                const Text('Courts'),
-                const Spacer(),
-                IconButton(
-                  onPressed:
-                      _courtCount > 1 ? () => setState(() => _courtCount--) : null,
-                  icon: const Icon(Icons.remove_circle_outline),
-                ),
-                Text('$_courtCount', style: Theme.of(context).textTheme.titleMedium),
-                IconButton(
-                  onPressed:
-                      _courtCount < 12 ? () => setState(() => _courtCount++) : null,
-                  icon: const Icon(Icons.add_circle_outline),
-                ),
-              ],
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.sports_tennis, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  const SizedBox(width: 12),
+                  const Text('Courts'),
+                  const Spacer(),
+                  IconButton(
+                    onPressed:
+                        _courtCount > 1 ? () => setState(() => _courtCount--) : null,
+                    icon: const Icon(Icons.remove_circle_outline),
+                  ),
+                  Text('$_courtCount', style: Theme.of(context).textTheme.titleMedium),
+                  IconButton(
+                    onPressed:
+                        _courtCount < 12 ? () => setState(() => _courtCount++) : null,
+                    icon: const Icon(Icons.add_circle_outline),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 24),
             FilledButton(

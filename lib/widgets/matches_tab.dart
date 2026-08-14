@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/database_provider.dart';
 import '../providers/meet_detail_providers.dart';
+import 'player_avatar.dart';
 import 'score_entry_dialog.dart';
 import 'section_header.dart';
 
@@ -43,11 +44,9 @@ class MatchesTab extends ConsumerWidget {
             child: matchViewsAsync.when(
               data: (matches) {
                 if (matches.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      'No matches yet.\nCheck players in, then generate matches.',
-                      textAlign: TextAlign.center,
-                    ),
+                  return _EmptyState(
+                    icon: Icons.sports_tennis,
+                    text: 'No matches yet.\nCheck players in, then generate matches.',
                   );
                 }
                 final pending =
@@ -59,6 +58,7 @@ class MatchesTab extends ConsumerWidget {
                     .toList();
 
                 return ListView(
+                  padding: const EdgeInsets.only(bottom: 24),
                   children: [
                     if (pending.isNotEmpty) ...[
                       const SectionHeader('Ongoing'),
@@ -81,6 +81,35 @@ class MatchesTab extends ConsumerWidget {
   }
 }
 
+class _EmptyState extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _EmptyState({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 48, color: theme.colorScheme.outline),
+            const SizedBox(height: 12),
+            Text(
+              text,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.outline),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _MatchCard extends StatelessWidget {
   final MatchView view;
 
@@ -88,25 +117,118 @@ class _MatchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final match = view.match;
     final isCompleted = match.status == 'completed';
-    final scoreText =
-        isCompleted ? '${match.team1Score} - ${match.team2Score}' : 'vs';
+    final team1Won = isCompleted && (match.team1Score ?? 0) > (match.team2Score ?? 0);
+    final team2Won = isCompleted && (match.team2Score ?? 0) > (match.team1Score ?? 0);
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      child: ListTile(
-        leading: CircleAvatar(child: Text('${match.courtNumber}')),
-        title: Text('${view.team1Player1.name} & ${view.team1Player2.name}'),
-        subtitle: Text('${view.team2Player1.name} & ${view.team2Player2.name}'),
-        trailing: Text(scoreText, style: Theme.of(context).textTheme.titleMedium),
-        onTap: isCompleted
-            ? null
-            : () => showDialog(
-                  context: context,
-                  builder: (context) => ScoreEntryDialog(view: view),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: Material(
+        color: theme.colorScheme.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: isCompleted
+              ? null
+              : () => showDialog(
+                    context: context,
+                    builder: (context) => ScoreEntryDialog(view: view),
+                  ),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.secondaryContainer,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        'Court ${match.courtNumber}',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSecondaryContainer,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    if (!isCompleted)
+                      Icon(Icons.edit_outlined, size: 16, color: theme.colorScheme.outline),
+                  ],
                 ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _TeamColumn(
+                        player1: view.team1Player1.name,
+                        player2: view.team1Player2.name,
+                        won: team1Won,
+                      ),
+                    ),
+                    SizedBox(
+                      width: 64,
+                      child: Text(
+                        isCompleted ? '${match.team1Score} – ${match.team2Score}' : 'vs',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    Expanded(
+                      child: _TeamColumn(
+                        player1: view.team2Player1.name,
+                        player2: view.team2Player2.name,
+                        won: team2Won,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
+    );
+  }
+}
+
+class _TeamColumn extends StatelessWidget {
+  final String player1;
+  final String player2;
+  final bool won;
+
+  const _TeamColumn({required this.player1, required this.player2, required this.won});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            PlayerAvatar(name: player1, radius: 14),
+            const SizedBox(width: 4),
+            PlayerAvatar(name: player2, radius: 14),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text(
+          '$player1 & $player2',
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.bodySmall?.copyWith(
+            fontWeight: won ? FontWeight.bold : FontWeight.normal,
+            color: won ? theme.colorScheme.primary : null,
+          ),
+        ),
+      ],
     );
   }
 }

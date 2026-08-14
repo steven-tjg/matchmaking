@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/database_provider.dart';
 import '../providers/meet_detail_providers.dart';
+import 'player_avatar.dart';
 
 class ScoreEntryDialog extends ConsumerStatefulWidget {
   final MatchView view;
@@ -54,7 +55,13 @@ class _ScoreEntryDialogState extends ConsumerState<ScoreEntryDialog> {
   Widget build(BuildContext context) {
     final view = widget.view;
     return AlertDialog(
-      title: Text('Court ${view.match.courtNumber} score'),
+      title: Row(
+        children: [
+          const Icon(Icons.sports_score, size: 20),
+          const SizedBox(width: 8),
+          Text('Court ${view.match.courtNumber} score'),
+        ],
+      ),
       content: Form(
         key: _formKey,
         child: Row(
@@ -63,8 +70,18 @@ class _ScoreEntryDialogState extends ConsumerState<ScoreEntryDialog> {
             Expanded(
               child: Column(
                 children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      PlayerAvatar(name: view.team1Player1.name, radius: 14),
+                      const SizedBox(width: 4),
+                      PlayerAvatar(name: view.team1Player2.name, radius: 14),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
                   Text('${view.team1Player1.name} /\n${view.team1Player2.name}',
-                      textAlign: TextAlign.center),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodySmall),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _team1Controller,
@@ -83,8 +100,18 @@ class _ScoreEntryDialogState extends ConsumerState<ScoreEntryDialog> {
             Expanded(
               child: Column(
                 children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      PlayerAvatar(name: view.team2Player1.name, radius: 14),
+                      const SizedBox(width: 4),
+                      PlayerAvatar(name: view.team2Player2.name, radius: 14),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
                   Text('${view.team2Player1.name} /\n${view.team2Player2.name}',
-                      textAlign: TextAlign.center),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodySmall),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _team2Controller,

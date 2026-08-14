@@ -5,6 +5,7 @@ import '../data/database.dart';
 import '../providers/database_provider.dart';
 import '../providers/meet_detail_providers.dart';
 import '../providers/meets_providers.dart';
+import 'player_avatar.dart';
 import 'section_header.dart';
 
 class ParticipantsTab extends ConsumerWidget {
@@ -39,13 +40,14 @@ class ParticipantsTab extends ConsumerWidget {
                 a.participant.arrivalOrder!.compareTo(b.participant.arrivalOrder!));
 
           if (participants.isEmpty) {
-            return const Center(
-              child: Text('No participants yet.\nTap + to add players from your roster.',
-                  textAlign: TextAlign.center),
+            return _EmptyState(
+              icon: Icons.group_add_outlined,
+              text: 'No participants yet.\nTap + to add players from your roster.',
             );
           }
 
           return ListView(
+            padding: const EdgeInsets.only(bottom: 88),
             children: [
               if (checkedIn.isNotEmpty) ...[
                 const SectionHeader('Checked in'),
@@ -82,6 +84,35 @@ class ParticipantsTab extends ConsumerWidget {
   }
 }
 
+class _EmptyState extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _EmptyState({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 48, color: theme.colorScheme.outline),
+            const SizedBox(height: 12),
+            Text(
+              text,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.outline),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _CheckedInTile extends StatelessWidget {
   final ParticipantWithPlayer entry;
   final bool canMoveUp;
@@ -101,29 +132,73 @@ class _CheckedInTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: CircleAvatar(child: Text('${entry.participant.arrivalOrder}')),
-      title: Text(entry.player.name),
-      subtitle: Text('${entry.participant.gamesPlayed} game${entry.participant.gamesPlayed == 1 ? '' : 's'} played'),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_upward),
-            onPressed: canMoveUp ? onMoveUp : null,
-            tooltip: 'Move earlier',
-          ),
-          IconButton(
-            icon: const Icon(Icons.arrow_downward),
-            onPressed: canMoveDown ? onMoveDown : null,
-            tooltip: 'Move later',
-          ),
-          IconButton(
-            icon: const Icon(Icons.undo),
-            onPressed: onUndo,
-            tooltip: 'Undo check-in',
-          ),
-        ],
+    final theme = Theme.of(context);
+    final games = entry.participant.gamesPlayed;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 28,
+              child: Text(
+                '${entry.participant.arrivalOrder}',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(width: 4),
+            PlayerAvatar(name: entry.player.name),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(entry.player.name, style: theme.textTheme.titleSmall),
+                  const SizedBox(height: 2),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '$games game${games == 1 ? '' : 's'}',
+                      style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.arrow_upward),
+              iconSize: 20,
+              onPressed: canMoveUp ? onMoveUp : null,
+              tooltip: 'Move earlier',
+            ),
+            IconButton(
+              icon: const Icon(Icons.arrow_downward),
+              iconSize: 20,
+              onPressed: canMoveDown ? onMoveDown : null,
+              tooltip: 'Move later',
+            ),
+            IconButton(
+              icon: const Icon(Icons.undo),
+              iconSize: 20,
+              onPressed: onUndo,
+              tooltip: 'Undo check-in',
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -143,12 +218,16 @@ class _WaitingTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: const CircleAvatar(child: Icon(Icons.person_outline)),
+      leading: PlayerAvatar(name: entry.player.name),
       title: Text(entry.player.name),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          FilledButton.tonal(onPressed: onCheckIn, child: const Text('Check in')),
+          FilledButton.tonal(
+            onPressed: onCheckIn,
+            style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8)),
+            child: const Text('Check in'),
+          ),
           IconButton(
             icon: const Icon(Icons.close),
             onPressed: onRemove,
@@ -219,12 +298,23 @@ class _AddParticipantSheet extends ConsumerWidget {
 
                 return ListView(
                   controller: scrollController,
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                   children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.outlineVariant,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ),
                     Text('Add participants', style: Theme.of(context).textTheme.titleLarge),
                     const SizedBox(height: 8),
                     ListTile(
-                      leading: const Icon(Icons.person_add_alt_1),
+                      leading: const CircleAvatar(child: Icon(Icons.person_add_alt_1)),
                       title: const Text('New player'),
                       onTap: () => _addNewPlayer(context, ref),
                     ),
@@ -236,7 +326,7 @@ class _AddParticipantSheet extends ConsumerWidget {
                       ),
                     for (final player in available)
                       ListTile(
-                        leading: const Icon(Icons.person_outline),
+                        leading: PlayerAvatar(name: player.name),
                         title: Text(player.name),
                         trailing: const Icon(Icons.add),
                         onTap: () => db.addParticipant(meetId, player.id),
