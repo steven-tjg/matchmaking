@@ -6,6 +6,7 @@ import '../providers/meets_providers.dart';
 import '../widgets/matches_tab.dart';
 import '../widgets/participants_tab.dart';
 import '../widgets/stats_tab.dart';
+import 'meet_form_screen.dart';
 
 class MeetDetailScreen extends ConsumerWidget {
   final int meetId;
@@ -40,6 +41,18 @@ class MeetDetailScreen extends ConsumerWidget {
             ),
             orElse: () => const Text('Meet'),
           ),
+          actions: [
+            meetAsync.maybeWhen(
+              data: (meet) => IconButton(
+                icon: const Icon(Icons.edit_outlined),
+                tooltip: 'Edit meet',
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => MeetFormScreen(meet: meet)),
+                ),
+              ),
+              orElse: () => const SizedBox.shrink(),
+            ),
+          ],
           bottom: const TabBar(tabs: [
             Tab(text: 'Participants'),
             Tab(text: 'Matches'),

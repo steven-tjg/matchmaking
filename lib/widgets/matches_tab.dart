@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/database_provider.dart';
 import '../providers/meet_detail_providers.dart';
+import 'edit_match_players_dialog.dart';
 import 'player_avatar.dart';
 import 'score_entry_dialog.dart';
 import 'section_header.dart';
@@ -62,11 +63,11 @@ class MatchesTab extends ConsumerWidget {
                   children: [
                     if (pending.isNotEmpty) ...[
                       const SectionHeader('Ongoing'),
-                      for (final match in pending) _MatchCard(view: match),
+                      for (final match in pending) _MatchCard(meetId: meetId, view: match),
                     ],
                     if (completed.isNotEmpty) ...[
                       const SectionHeader('Completed'),
-                      for (final match in completed) _MatchCard(view: match),
+                      for (final match in completed) _MatchCard(meetId: meetId, view: match),
                     ],
                   ],
                 );
@@ -111,9 +112,10 @@ class _EmptyState extends StatelessWidget {
 }
 
 class _MatchCard extends StatelessWidget {
+  final int meetId;
   final MatchView view;
 
-  const _MatchCard({required this.view});
+  const _MatchCard({required this.meetId, required this.view});
 
   @override
   Widget build(BuildContext context) {
@@ -158,7 +160,19 @@ class _MatchCard extends StatelessWidget {
                     ),
                     const Spacer(),
                     if (!isCompleted)
-                      Icon(Icons.edit_outlined, size: 16, color: theme.colorScheme.outline),
+                      InkWell(
+                        borderRadius: BorderRadius.circular(20),
+                        onTap: () => showDialog(
+                          context: context,
+                          builder: (context) =>
+                              EditMatchPlayersDialog(meetId: meetId, view: view),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(4),
+                          child: Icon(Icons.edit_outlined,
+                              size: 16, color: theme.colorScheme.outline),
+                        ),
+                      ),
                   ],
                 ),
                 const SizedBox(height: 12),

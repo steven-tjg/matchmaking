@@ -91,7 +91,7 @@ class AppDatabase extends _$AppDatabase {
       (select(players)..orderBy([(t) => OrderingTerm(expression: t.name)])).watch();
 
   Future<int> addPlayer(String name) =>
-      into(players).insert(PlayersCompanion.insert(name: name));
+      into(players).insert(PlayersCompanion.insert(name: _toPascalCase(name)));
 
   // ---- Meets ----
 
@@ -281,4 +281,57 @@ class AppDatabase extends _$AppDatabase {
           completedAt: Value(DateTime.now()),
         ),
       );
+
+  /// Reassigns which participants occupy a pending match's 4 slots (e.g. swapping one
+  /// player between teams to rebalance skill level), adjusting gamesPlayed for whoever
+  /// was swapped in or out.
+  Future<void> updateMatchPlayers(
+    int matchId, {
+    required int team1Player1Id,
+    required int team1Player2Id,
+    required int team2Player1Id,
+    required int team2Player2Id,
+  }) {
+    return transaction(() async {
+      final match = await (select(matchRecords)..where((t) => t.id.equals(matchId))).getSingle();
+      final oldIds = {
+        match.team1Player1Id,
+        match.team1Player2Id,
+        match.team2Player1Id,
+        match.team2Player2Id,
+      };
+      final newIds = {team1Player1Id, team1Player2Id, team2Player1Id, team2Player2Id};
+
+      for (final removedId in oldIds.difference(newIds)) {
+        await _adjustGamesPlayed(removedId, -1);
+      }
+      for (final addedId in newIds.difference(oldIds)) {
+        await _adjustGamesPlayed(addedId, 1);
+      }
+
+      await (update(matchRecords)..where((t) => t.id.equals(matchId))).write(
+        MatchRecordsCompanion(
+          team1Player1Id: Value(team1Player1Id),
+          team1Player2Id: Value(team1Player2Id),
+          team2Player1Id: Value(team2Player1Id),
+          team2Player2Id: Value(team2Player2Id),
+        ),
+      );
+    });
+  }
+
+  Future<void> _adjustGamesPlayed(int participantId, int delta) async {
+    final participant =
+        await (select(meetParticipants)..where((t) => t.id.equals(participantId))).getSingle();
+    final newCount = participant.gamesPlayed + delta;
+    await (update(meetParticipants)..where((t) => t.id.equals(participantId)))
+        .write(MeetParticipantsCompanion(gamesPlayed: Value(newCount < 0 ? 0 : newCount)));
+  }
+}
+
+String _toPascalCase(String name) {
+  return name.trim().split(RegExp(r'\s+')).map((word) {
+    if (word.isEmpty) return word;
+    return word[0].toUpperCase() + word.substring(1).toLowerCase();
+  }).join(' ');
 }
