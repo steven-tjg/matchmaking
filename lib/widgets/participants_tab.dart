@@ -290,7 +290,7 @@ class _AddParticipantSheet extends ConsumerWidget {
           builder: (context, scrollController) {
             return rosterAsync.when(
               data: (roster) {
-                final existingPlayerIds = (participantsAsync.valueOrNull ?? [])
+                final existingPlayerIds = (participantsAsync.value ?? [])
                     .map((p) => p.participant.playerId)
                     .toSet();
                 final available =

@@ -63,7 +63,7 @@ class _EditMatchPlayersDialogState extends ConsumerState<EditMatchPlayersDialog>
       ),
       content: participantsAsync.when(
         data: (participants) {
-          final matches = matchesAsync.valueOrNull ?? [];
+          final matches = matchesAsync.value ?? [];
 
           // Participants busy in a different pending match can't be picked here.
           final busyElsewhere = <int>{};
